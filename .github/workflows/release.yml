@@ -1,0 +1,32 @@
+name: Check release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Check release version
+        if: github.event_name == 'release'
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          manifest = json.loads(Path('custom_components/sewage_alerts_uk/manifest.json').read_text())
+          assert os.environ['RELEASE_TAG'] == 'v' + manifest['version'], 'Release tag must match the manifest version'
+          assert Path('custom_components/sewage_alerts_uk/brand/icon.png').is_file()
+          print('Release version and installable brand assets verified')
+          PY

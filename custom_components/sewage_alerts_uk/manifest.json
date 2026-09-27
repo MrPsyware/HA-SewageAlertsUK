@@ -1,0 +1,14 @@
+{
+  "domain": "sewage_alerts_uk",
+  "name": "Sewage Alerts UK",
+  "codeowners": [
+    "@MrPsyware"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/MrPsyware/HA-SewageAlertsUK",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/MrPsyware/HA-SewageAlertsUK/issues",
+  "requirements": [],
+  "version": "0.2.0"
+}

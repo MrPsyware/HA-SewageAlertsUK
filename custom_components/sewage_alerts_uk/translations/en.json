@@ -1,0 +1,89 @@
+{
+  "title": "Sewage Alerts UK",
+  "config": {
+    "step": {
+      "site": {
+        "title": "Choose an outfall",
+        "description": "Coordinates identify the discharge point. Check its location on a map before choosing: a matching river name does not establish that the outfall is upstream of you. Add the integration again to monitor more outfalls.",
+        "data": {
+          "site_id": "Outfall"
+        }
+      },
+      "manual": {
+        "title": "Choose an individual outfall (advanced)",
+        "description": "Choose the sewerage company and enter part of a receiving river name or outfall ID. This version covers the companies in England's National Storm Overflow Hub. Reports indicate overflow activity, not measured river water quality.",
+        "data": {
+          "provider": "Water company",
+          "search": "River name or outfall ID"
+        }
+      },
+      "user": {
+        "title": "Where should we monitor?",
+        "menu_options": {
+          "home": "Use Home Assistant home location",
+          "postcode": "Enter a postcode",
+          "town": "Find a town or village",
+          "coordinates": "Enter latitude and longitude",
+          "manual": "Choose an individual outfall (advanced)"
+        }
+      },
+      "coordinates": {
+        "title": "Your location",
+        "description": "Coordinates are prefilled from your Home Assistant home location. Adjust them to a riverside location if needed. Current discharge coverage is England; river routing excludes tidal rivers and canals.",
+        "data": {
+          "latitude": "Latitude",
+          "longitude": "Longitude"
+        }
+      },
+      "postcode": {
+        "title": "Enter your postcode",
+        "description": "Your postcode is sent to Postcodes.io once during setup to find coordinates.",
+        "data": {
+          "postcode": "Full UK postcode"
+        }
+      },
+      "town": {
+        "title": "Find your town or village",
+        "description": "Your search is sent to Postcodes.io. Choose the correct place in the next step.",
+        "data": {
+          "town": "Town or village"
+        }
+      },
+      "place": {
+        "title": "Confirm your location",
+        "description": "Town and postcode coordinates are approximate. You will confirm a river section next.",
+        "data": {
+          "place": "Location"
+        }
+      },
+      "river": {
+        "title": "Choose the river section and upstream range",
+        "description": "The nearest supported section is selected by default. Coordinates identify the point on the river being monitored. Range is distance ALONG the river, including connected upstream tributaries, not a circle around your home. Open river mapping can omit small streams; tidal sections and canals are excluded.",
+        "data": {
+          "river": "River section",
+          "upstream_km": "Distance upstream (km, 1\u201325)"
+        }
+      },
+      "confirm": {
+        "title": "Confirm upstream monitoring",
+        "description": "Monitor {count} matched outfalls up to {range} km upstream of {river}, at {latitude}, {longitude}.\n\n{outfalls}\n\nMatches follow the mapped river network and use outfalls within 100 m of a river link. Ambiguous matches are excluded. Coverage is limited to the supported English water-company feeds and is not exhaustive.\n\nThe selected set is saved at setup; recreate this watch to change location/range or discover new outfalls."
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to read the water company's feed. Try again later.",
+      "no_results": "No matching outfalls. Try a shorter river name, an outfall ID, or another company.",
+      "too_many_results": "Too many matches. Enter a more specific river name or an outfall ID.",
+      "empty_search": "Enter a river name or outfall ID.",
+      "invalid_site": "Choose an outfall from the list.",
+      "location_not_found": "No location found. Check the postcode or town name.",
+      "outside_coverage": "This location is outside the current search area. Discharge feeds currently cover England.",
+      "no_rivers": "No supported non-tidal river found within 5 km. Try coordinates nearer the river.",
+      "discovery_failed": "Unable to complete river tracing and check all company feeds. Retry or use a smaller range.",
+      "no_upstream_outfalls": "No unambiguous upstream outfalls found in the supported feeds. Try another river section or a larger range. This does not mean there are no discharges.",
+      "too_many_outfalls": "More than 100 upstream outfalls were found. Reduce the upstream range."
+    },
+    "abort": {
+      "already_configured": "This outfall is already configured."
+    }
+  }
+}

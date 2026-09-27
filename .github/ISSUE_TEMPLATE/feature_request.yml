@@ -1,0 +1,10 @@
+name: Feature request
+description: Suggest an improvement or additional provider.
+body:
+  - type: textarea
+    id: request
+    attributes:
+      label: What would you like to do?
+      description: Explain the use case and any relevant public data sources.
+    validations:
+      required: true
