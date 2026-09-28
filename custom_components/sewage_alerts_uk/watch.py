@@ -42,6 +42,21 @@ class WatchState:
             return None
         return False
 
+    def latest_discharge(self):
+        events = [
+            record for record in self.records.values() if record and record.latest_start
+        ]
+        return max((record.latest_start for record in events), default=None)
+
+    def latest_event_duration(self, now):
+        events = [
+            record for record in self.records.values() if record and record.latest_start
+        ]
+        if not events:
+            return None
+        latest = max(events, key=lambda record: record.latest_start)
+        return latest.discharge_duration(now)
+
 
 class WatchCoordinator(DataUpdateCoordinator[WatchState]):
     def __init__(self, hass, entry):
@@ -117,6 +132,12 @@ class WatchEntity(CoordinatorEntity):
                     "status": record.effective_status(now)
                     if (record := state.records.get(site_key(site)))
                     else "unavailable",
+                    "last_discharge": record.latest_start.isoformat()
+                    if record and record.latest_start
+                    else None,
+                    "discharge_duration_seconds": record.discharge_duration(now)
+                    if record
+                    else None,
                 }
                 for site in self.coordinator.sites
             ],

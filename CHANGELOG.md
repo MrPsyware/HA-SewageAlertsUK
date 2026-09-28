@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1 — 2026-09-28
+
+- Treat provider `Status` as the current state even when event-driven
+  `LastUpdated` timestamps are old.
+- Add latest discharge and discharge duration sensors for individual outfalls
+  and upstream watches.
+- Active discharge durations update every minute without extra provider API calls.
+- Include per-outfall latest discharge and duration attributes on upstream watches.
+
 ## 0.2.0 — 2026-09-28
 
 First public release, installable as a HACS custom repository.

@@ -182,8 +182,8 @@ def test_stale_watch_data(network):
         outfall(network, 0, 0), updated=datetime.now(UTC) - timedelta(days=2)
     )
     state = WatchState({"a": record}, [])
-    assert state.counts(datetime.now(UTC)) == (0, 1)
-    assert state.discharging(datetime.now(UTC)) is None
+    assert state.counts(datetime.now(UTC)) == (0, 0)
+    assert state.discharging(datetime.now(UTC)) is False
 
 
 async def test_geocoding():

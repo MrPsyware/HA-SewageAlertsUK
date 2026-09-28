@@ -73,7 +73,9 @@ Each upstream watch creates one device with:
 | Upstream discharging | `on` if any selected outfall reports a discharge; `off` only when all selected outfalls have usable reports saying they are not discharging; otherwise `unknown` |
 | Upstream status | `discharging`, `no_reported_discharges`, or `unknown` |
 | Reported active outfalls | Count of selected outfalls with usable reports of active discharge; a lower bound when data is missing |
-| Outfalls with unknown status | Count with stale, offline, missing or unavailable reports |
+| Outfalls with unknown status | Count with offline, missing or unavailable reports |
+| Latest discharge | Start time of the most recently started reported discharge |
+| Latest discharge duration | Duration of that latest event; ticks every minute while it is active |
 
 Attributes include the monitored outfalls, company, receiving watercourse,
 upstream distance, current status, and any companies whose requests failed.
@@ -101,9 +103,10 @@ mode: single
 You can also select the entity in Home Assistant's automation editor. Use the
 unknown-status count for a separate monitoring-problem alert.
 
-Manual outfall entries retain five entities: Discharging, Status, Latest discharge
-start, Latest discharge end, and Source last updated. The latest end timestamp
-may belong to a previous discharge while a new one is active.
+Manual outfall entries provide status, last discharge, discharge duration, start/end
+timestamps and source update time. A duration is the time from the latest event
+start to its end; while an event is active it ticks up every minute from its start.
+The latest end timestamp may belong to a previous discharge while a new one is active.
 
 ## How upstream selection works
 
@@ -138,11 +141,12 @@ The selected outfalls are polled every 15 minutes, with one query per company.
 Requests have timeouts and handle ArcGIS pagination. Monitoring does not repeat
 location lookups or river-network downloads.
 
-An offline monitor, unknown status, missing update time, missing outfall or failed
-company request is treated as unknown by the upstream watch. Reports older than
-24 hours are conservatively marked stale on the next poll. This is an integration
-policy, not a provider guarantee: some companies may update individual records
-only when something changes. Source data can also be delayed.
+An offline monitor, unknown status, missing outfall or failed company request is
+treated as unknown by the upstream watch. Water-company feeds are event-driven:
+some providers update `LastUpdated` only when an overflow event or state change is
+recorded. An old `LastUpdated` value therefore does not by itself make the current
+`Status` unusable. The integration trusts the provider's current status and exposes
+the source timestamp separately so you can judge feed freshness.
 
 A failed request for a manual single-outfall entry makes its entities unavailable.
 Home Assistant records observed changes according to Recorder settings; there is

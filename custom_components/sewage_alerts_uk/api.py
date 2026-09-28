@@ -10,8 +10,6 @@ from typing import Any
 
 import aiohttp
 
-from .const import STALE_AFTER
-
 
 class FeedError(Exception):
     """The feed could not supply a trustworthy response."""
@@ -42,13 +40,17 @@ class Outfall:
     longitude: float | None
 
     def effective_status(self, now: datetime) -> str:
-        if self.updated is None:
-            return "unknown"
-        if self.updated > now + STALE_AFTER:
-            return "unknown"
-        if now - self.updated > STALE_AFTER:
-            return "stale"
+        """Use the provider's current state; LastUpdated is event-driven."""
         return self.status
+
+    def discharge_duration(self, now: datetime) -> float | None:
+        """Latest event duration in seconds, ticking while the event is active."""
+        if self.latest_start is None:
+            return None
+        end = now if self.status == "discharging" else self.latest_end
+        if end is None or end < self.latest_start:
+            return None
+        return (end - self.latest_start).total_seconds()
 
     @property
     def label(self) -> str:

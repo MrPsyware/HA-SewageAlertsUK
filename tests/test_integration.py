@@ -82,6 +82,20 @@ def test_missing_id_is_not_silently_ignored():
         parse_outfall({"Status": 0})
 
 
+def test_discharge_duration_uses_end_or_now(outfall):
+    start = datetime(2026, 9, 28, 1, 0, tzinfo=UTC)
+    active = replace(outfall, status="discharging", latest_start=start, latest_end=None)
+    assert active.discharge_duration(start + timedelta(minutes=7, seconds=30)) == 450
+    ended = replace(
+        active, status="not_discharging", latest_end=start + timedelta(minutes=12)
+    )
+    assert ended.discharge_duration(datetime(2026, 9, 28, 3, tzinfo=UTC)) == 720
+    assert (
+        replace(outfall, latest_start=None).discharge_duration(datetime.now(UTC))
+        is None
+    )
+
+
 @pytest.mark.parametrize(
     "status, age, expected",
     [
@@ -89,8 +103,8 @@ def test_missing_id_is_not_silently_ignored():
         ("not_discharging", 0, False),
         ("offline", 0, None),
         ("unknown", 0, None),
-        ("not_discharging", 25, None),
-        ("discharging", 25, None),
+        ("not_discharging", 25, False),
+        ("discharging", 25, True),
     ],
 )
 async def test_binary_never_reports_missing_data_as_clear(
@@ -116,9 +130,9 @@ async def test_status_and_timestamps(hass, outfall):
     status = SewageSensor(coordinator, entry(), "status", "Status")
     assert status.native_value == "not_discharging"
     coordinator.data = replace(outfall, updated=NOW - timedelta(days=2))
-    assert status.native_value == "stale"
+    assert status.native_value == "not_discharging"
     coordinator.data = replace(outfall, updated=None)
-    assert status.native_value == "unknown"
+    assert status.native_value == "not_discharging"
     started = SewageSensor(
         coordinator, entry(), "latest_start", "Latest discharge start"
     )
