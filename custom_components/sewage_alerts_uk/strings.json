@@ -27,6 +27,16 @@
           "manual": "Choose an individual outfall (advanced)"
         }
       },
+      "area": {
+        "title": "What should we monitor?",
+        "description": "Choose a directed river watch or a geographic coastal area. Coastal watches use a radius around your location and group nearby beach and coastal outfalls.",
+        "data": {"area_type": "Monitoring area"}
+      },
+      "coast": {
+        "title": "Choose the coastal monitoring radius",
+        "description": "This finds reported outfalls within the radius around your location, regardless of the receiving water name. It is a geographic coastal watch, not a model of tide, currents or bathing-water quality.",
+        "data": {"coastal_radius_km": "Coastal radius (km, 1–25)"}
+      },
       "coordinates": {
         "title": "Your location",
         "description": "Coordinates are prefilled from your Home Assistant home location. Adjust them to a riverside location if needed. Current discharge coverage is England; river routing excludes tidal rivers and canals.",
@@ -51,7 +61,7 @@
       },
       "place": {
         "title": "Confirm your location",
-        "description": "Town and postcode coordinates are approximate. You will confirm a river section next.",
+          "description": "Town and postcode coordinates are approximate. You will choose a river or coastal watch next.",
         "data": {
           "place": "Location"
         }
@@ -65,8 +75,8 @@
         }
       },
       "confirm": {
-        "title": "Confirm upstream monitoring",
-        "description": "Monitor {count} matched outfalls up to {range} km upstream of {river}, at {latitude}, {longitude}.\n\n{outfalls}\n\nMatches follow the mapped river network and use outfalls within 100 m of a river link. Ambiguous matches are excluded. Coverage is limited to the supported English water-company feeds and is not exhaustive.\n\nThe selected set is saved at setup; recreate this watch to change location/range or discover new outfalls."
+        "title": "Confirm monitoring area",
+          "description": "Monitor {count} matched outfalls in the {range} km {river} watch at {latitude}, {longitude}.\n\n{outfalls}\n\nRiver matches follow the mapped network and include connected upstream links. Coastal matches use geographic distance around the location. Coverage is limited to supported English water-company feeds and is not exhaustive.\n\nThe selected set is saved at setup; recreate this watch to change location/range or discover new outfalls."
       }
     },
     "error": {
@@ -80,7 +90,9 @@
       "no_rivers": "No supported non-tidal river found within 5 km. Try coordinates nearer the river.",
       "discovery_failed": "Unable to complete river tracing and check all company feeds. Retry or use a smaller range.",
       "no_upstream_outfalls": "No unambiguous upstream outfalls found in the supported feeds. Try another river section or a larger range. This does not mean there are no discharges.",
-      "too_many_outfalls": "More than 100 upstream outfalls were found. Reduce the upstream range."
+    "too_many_outfalls": "More than 100 upstream outfalls were found. Reduce the upstream range.",
+    "no_coastal_outfalls": "No supported outfalls were found within this coastal radius. Try a larger radius or check the location.",
+    "too_many_coastal_outfalls": "More than 100 coastal outfalls were found. Reduce the radius."
     },
     "abort": {
       "already_configured": "This outfall is already configured."

@@ -24,6 +24,8 @@ async def test_live_shrewsbury_discovery(hass, request):
         ):
             result = await flow._find_rivers()
             assert result is not None, flow.location_error
+            assert result["step_id"] == "area"
+            result = await flow.async_step_area({"area_type": "river"})
             assert result["step_id"] == "river"
             selected = next(
                 snap

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-10-04
+
+- Add coastal-area watches alongside river/upstream watches.
+- Choose a coastal radius around a postcode, town, home location or coordinate.
+- Group nearby coastal outfalls into one automation-friendly watch device.
+- Preserve receiving-water names, coordinates and distances for each coastal outfall.
+- Document the coastal limitations: radius matching does not model tides, currents,
+  plume direction or bathing-water quality.
+
 ## 0.2.1 — 2026-09-28
 
 - Treat provider `Status` as the current state even when event-driven

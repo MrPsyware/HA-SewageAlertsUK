@@ -11,6 +11,9 @@ A Home Assistant custom integration that monitors reported sewage discharges
 **upstream of a chosen point on your local river**. No account or API key is
 required. Current discharge feeds cover nine English water companies.
 
+It also supports **coastal watches**: choose a coastal radius around your home
+and nearby beach/coastal outfalls are grouped into one watch device.
+
 ## Install through HACS
 
 Requires **Home Assistant 2026.9.4 or later** and a working HACS installation.
@@ -134,6 +137,20 @@ Reports describe storm-overflow activity, not sewage concentration, pollutant
 travel time or measured river water quality. `off` means no selected monitor is
 currently reporting a discharge, not that a river is clean. This does not
 reproduce SewageMap's downstream-impact model.
+
+## How coastal watches work
+
+Choose **Coastal area and beach outfalls** after selecting your location. The
+radius is geographic distance from that point, up to 25 km. All supported-company
+outfalls returned by the public feeds within the radius are grouped into one
+coastal watch. Their attributes include the receiving watercourse/name and exact
+coordinates where supplied.
+
+Coastal watches do not model tides, currents, dilution, plume direction, bathing
+water boundaries, or whether an outfall is on the same beach. A nearby outfall can
+affect a different stretch of coast depending on conditions, and a discharge
+outside the radius can still affect the area. Treat this as a nearby-outfall alert
+group rather than a water-quality or beach-safety determination.
 
 ## Updates and missing data
 

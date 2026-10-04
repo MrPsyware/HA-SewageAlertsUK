@@ -250,6 +250,17 @@ async def test_location_menu_and_coordinates(hass, network):
         ),
     ):
         result = await flow.async_step_coordinates({"latitude": 52, "longitude": 0})
+    assert result["step_id"] == "area"
+    with (
+        patch(
+            "custom_components.sewage_alerts_uk.location_flow.async_get_clientsession"
+        ),
+        patch(
+            "custom_components.sewage_alerts_uk.location_flow.load_network",
+            AsyncMock(return_value=network),
+        ),
+    ):
+        result = await flow.async_step_area({"area_type": "river"})
     assert result["step_id"] == "river"
     assert (
         result["data_schema"]({"river": "main", "upstream_km": 10})["upstream_km"] == 10
@@ -268,11 +279,11 @@ async def test_location_confirm_preserves_watch_and_unique_id(hass):
         MagicMock(),
     )
     result = await flow.async_step_confirm()
-    assert "1.00 km upstream" in result["description_placeholders"]["outfalls"]
+    assert "1.00 km away" in result["description_placeholders"]["outfalls"]
     result = await flow.async_step_confirm({})
     assert result["data"]["mode"] == "upstream"
     assert result["data"]["sites"] == flow.sites
-    assert result["data"]["upstream_km"] == 10
+    assert result["data"]["range_km"] == 10
 
 
 async def test_watch_partial_provider_failure(hass, network):
@@ -316,3 +327,45 @@ async def test_discovery_does_not_silently_ignore_failed_company(hass, network):
         pytest.raises(FeedError, match="incomplete"),
     ):
         await flow._discover_upstream("main")
+
+
+async def test_coastal_discovery_groups_nearby_outfalls(hass, network):
+    flow = SewageConfigFlow()
+    flow.hass = hass
+    flow.target_coords = network.unproject((0, 0))
+    flow.range_km = 2
+    flow.providers = {
+        "a": {"name": "A", "url": "https://a"},
+        "b": {"name": "B", "url": "https://b"},
+    }
+    nearby = outfall(network, 500, 0, status=1)
+    far = outfall(network, 5000, 0, status=0)
+    with (
+        patch(
+            "custom_components.sewage_alerts_uk.location_flow.async_get_clientsession"
+        ),
+        patch(
+            "custom_components.sewage_alerts_uk.location_flow.StormOverflowClient.fetch",
+            AsyncMock(side_effect=[{nearby.site_id: nearby}, {far.site_id: far}]),
+        ),
+    ):
+        await flow._discover_coastal()
+    assert len(flow.sites) == 1
+    assert flow.sites[0]["site_id"] == nearby.site_id
+    assert flow.sites[0]["distance_m"] == pytest.approx(500, abs=2)
+
+
+async def test_coastal_confirm_creates_coastal_watch(hass):
+    flow = SewageConfigFlow()
+    flow.hass, flow.context = hass, {"source": "user"}
+    flow.target_coords, flow.range_km, flow.coast_name = (50.8, 0.3), 10, "Eastbourne"
+    flow.sites = [
+        {"site_id": "S1", "company": "Water", "river": "Sea", "distance_m": 1000}
+    ]
+    flow.async_set_unique_id, flow._abort_if_unique_id_configured = (
+        AsyncMock(),
+        MagicMock(),
+    )
+    result = await flow.async_step_confirm({})
+    assert result["data"]["mode"] == "coastal"
+    assert result["data"]["range_km"] == 10

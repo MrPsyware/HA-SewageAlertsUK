@@ -109,18 +109,28 @@ class WatchEntity(CoordinatorEntity):
             identifiers={(DOMAIN, entry.unique_id)},
             name=entry.title,
             manufacturer="Sewage Alerts UK",
-            model="Upstream river watch",
+            model=(
+                "Coastal area watch"
+                if entry.data.get("mode") == "coastal"
+                else "Upstream river watch"
+            ),
         )
 
     @property
     def extra_state_attributes(self):
         state = self.coordinator.data
         now = dt_util.utcnow()
+        range_km = self.entry.data.get("range_km", self.entry.data.get("upstream_km"))
         return {
             "river": self.entry.data["river"],
             "latitude": self.entry.data["latitude"],
             "longitude": self.entry.data["longitude"],
-            "upstream_range_km": self.entry.data["upstream_km"],
+            "range_km": range_km,
+            "range_type": (
+                "coastal_radius"
+                if self.entry.data.get("mode") == "coastal"
+                else "upstream_river_distance"
+            ),
             "monitored_outfalls": len(self.coordinator.sites),
             "failed_companies": state.failed_companies,
             "outfalls": [
@@ -128,7 +138,7 @@ class WatchEntity(CoordinatorEntity):
                     "site_id": site["site_id"],
                     "company": site["company"],
                     "river": site["river"],
-                    "upstream_distance_km": round(site["distance_m"] / 1000, 2),
+                    "distance_km": round(site["distance_m"] / 1000, 2),
                     "status": record.effective_status(now)
                     if (record := state.records.get(site_key(site)))
                     else "unavailable",
