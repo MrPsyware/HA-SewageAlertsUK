@@ -111,7 +111,7 @@ unknown-status count for a separate monitoring-problem alert.
 
 ### Map and outfall details
 
-Version 0.5 adds a native Home Assistant geolocation marker for every monitored
+Version 0.6 adds a native Home Assistant geolocation marker for every monitored
 outfall. All markers are available from the `sewage_alerts_uk` geolocation source,
 and currently discharging markers are also exposed through
 `sewage_alerts_uk_active`. Add either card to a dashboard:
