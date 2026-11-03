@@ -1,0 +1,17 @@
+Sewage Alerts UK is an independent project, not an official Home Assistant,
+HACS, SewageMap, Ordnance Survey or water-company product.
+
+The MIT licence covers this project's original software and documentation.
+Generated project artwork is made available under the same terms, to the extent
+copyright applies. See assets/README.md for its provenance.
+
+External datasets and recorded feed samples retain their original licences:
+- Storm overflow data: the respective water companies via the Stream National
+  Storm Overflow Hub. The source endpoints are in providers.json; recorded
+  samples in tests/feed_samples.json were retrieved on 27 September 2026.
+- OS Open Rivers: contains OS data © Crown copyright and database right 2026.
+  Open Government Licence v3.0.
+- Postcodes.io: aggregates postcode and OS Open Names data. See
+  https://postcodes.io/docs/licences/ for the applicable source licences.
+
+External data is not relicensed by the MIT licence in this repository.

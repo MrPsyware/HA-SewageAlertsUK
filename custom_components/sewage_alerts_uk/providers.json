@@ -1,0 +1,38 @@
+{
+  "yorkshire_water": {
+    "name": "Yorkshire Water",
+    "url": "https://services-eu1.arcgis.com/1WqkK5cDKUbF0CkH/arcgis/rest/services/Yorkshire_Water_Storm_Overflow_Activity/FeatureServer/0"
+  },
+  "wessex_water": {
+    "name": "Wessex Water",
+    "url": "https://services.arcgis.com/3SZ6e0uCvPROr4mS/arcgis/rest/services/Wessex_Water_Storm_Overflow_Activity/FeatureServer/0"
+  },
+  "united_utilities": {
+    "name": "United Utilities",
+    "url": "https://services5.arcgis.com/5eoLvR0f8HKb7HWP/arcgis/rest/services/United_Utilities_Storm_Overflow_Activity/FeatureServer/0"
+  },
+  "thames_water": {
+    "name": "Thames Water",
+    "url": "https://services2.arcgis.com/g6o32ZDQ33GpCIu3/arcgis/rest/services/Thames_Water_Storm_Overflow_Activity_(Production)_view/FeatureServer/0"
+  },
+  "south_west_water": {
+    "name": "South West Water",
+    "url": "https://services-eu1.arcgis.com/OMdMOtfhATJPcHe3/arcgis/rest/services/NEH_outlets_PROD/FeatureServer/0"
+  },
+  "severn_trent_water": {
+    "name": "Severn Trent Water",
+    "url": "https://services1.arcgis.com/NO7lTIlnxRMMG9Gw/arcgis/rest/services/Severn_Trent_Water_Storm_Overflow_Activity/FeatureServer/0"
+  },
+  "northumbrian_water": {
+    "name": "Northumbrian Water",
+    "url": "https://services-eu1.arcgis.com/MSNNjkZ51iVh8yBj/arcgis/rest/services/Northumbrian_Water_Storm_Overflow_Activity_2_view/FeatureServer/0"
+  },
+  "anglian_water_services": {
+    "name": "Anglian Water Services",
+    "url": "https://services3.arcgis.com/VCOY1atHWVcDlvlJ/arcgis/rest/services/stream_service_outfall_locations_view/FeatureServer/0"
+  },
+  "southern_water": {
+    "name": "Southern Water",
+    "url": "https://services-eu1.arcgis.com/6qJmARkS2dt2IjVA/arcgis/rest/services/SouthernWater_StormOverflowActivity_PROD_view/FeatureServer/0"
+  }
+}
