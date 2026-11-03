@@ -11,6 +11,7 @@ from .const import ATTRIBUTION, DOMAIN
 from .watch import site_key
 
 SOURCE = DOMAIN
+ACTIVE_SOURCE = f"{DOMAIN}_active"
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -37,7 +38,6 @@ class OutfallLocation(CoordinatorEntity, GeolocationEvent):
     """A persistent map marker for a configured outfall."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_source = SOURCE
     _attr_icon = "mdi:pipe-disconnected"
 
     def __init__(self, coordinator, entry, site):
@@ -56,6 +56,14 @@ class OutfallLocation(CoordinatorEntity, GeolocationEvent):
             return self.coordinator.data.records.get(site_key(self.site))
         data = self.coordinator.data
         return data if data and data.site_id == self.site_id else None
+
+    @property
+    def source(self):
+        """Show active outfalls under a separate Map-card source."""
+        record = self._record()
+        if record and record.effective_status(dt_util.utcnow()) == "discharging":
+            return ACTIVE_SOURCE
+        return SOURCE
 
     @property
     def latitude(self):
