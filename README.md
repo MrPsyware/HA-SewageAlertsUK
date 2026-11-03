@@ -112,8 +112,9 @@ unknown-status count for a separate monitoring-problem alert.
 ### Map and outfall details
 
 Version 0.5 adds a native Home Assistant geolocation marker for every monitored
-outfall. The markers are available from the `sewage_alerts_uk` geolocation source,
-so they can be shown on the built-in Map card. Add this card to a dashboard:
+outfall. All markers are available from the `sewage_alerts_uk` geolocation source,
+and currently discharging markers are also exposed through
+`sewage_alerts_uk_active`. Add either card to a dashboard:
 
 ```yaml
 type: map
@@ -124,9 +125,20 @@ auto_fit: true
 hours_to_show: 0
 ```
 
+To show only outfalls currently reporting a discharge, use the active source:
+
+```yaml
+type: map
+title: Active sewage discharges
+geo_location_sources:
+  - sewage_alerts_uk_active
+auto_fit: true
+hours_to_show: 0
+```
+
 Each marker includes the site ID, company, receiving watercourse, current status,
-last discharge start, event duration, and estimated contamination window. A simple
-details card can sit beside the map (replace the entity ID with your watch):
+last discharge start, event duration, and estimated contamination window. A details
+card can sit beside the map (replace the entity IDs with your watch):
 
 ```yaml
 type: entities
@@ -139,6 +151,22 @@ entities:
   - sensor.example_river_latest_discharge_duration
   - sensor.example_river_estimated_contamination_until
   - sensor.example_river_estimated_contamination_remaining
+```
+
+For a richer single-card summary, a Markdown card can list every monitored outfall:
+
+```yaml
+type: markdown
+title: Outfall details
+content: >-
+  {% set outfalls = state_attr('sensor.example_river_upstream_status', 'outfalls') or [] %}
+  {% for outfall in outfalls %}
+  **{{ outfall.site_id }} — {{ outfall.company }}**  
+  {{ outfall.river or 'Unnamed watercourse' }} · {{ outfall.status }} ·
+  {{ outfall.distance_km }} km away  
+  Last discharge: {{ outfall.last_discharge or 'No recorded discharge' }}
+
+  {% endfor %}
 ```
 
 The map shows monitored discharge points and their reported state; it is not a
