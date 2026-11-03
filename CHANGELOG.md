@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 — 2026-11-03
+
+- Add a separate `sewage_alerts_uk_active` geolocation source for currently
+  discharging outfalls.
+- Document native map and Markdown details-card layouts.
+
 ## 0.5.1 — 2026-11-03
 
 - Replace location-specific dashboard and test examples with generic placeholders.
