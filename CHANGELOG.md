@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0 — 2026-11-27
+
+- Bundle a dashboard card with a live map, outfall details and configurable
+  sections, including the precautionary warning.
+- Add river and coastal watch reconfiguration with a review step before
+  replacing monitored outfalls.
+- Show potential downstream routes to the watch point for reported discharges
+  and recent events.
+- Retry failed company discovery requests and distinguish feed failures from
+  river tracing failures.
+
 ## 0.6.1 — 2026-11-27
 
 - Load saved coastal watches when Home Assistant starts.

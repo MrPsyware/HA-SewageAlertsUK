@@ -164,8 +164,82 @@ class RiverNetwork:
                     heapq.heappush(queue, (distance + link.length, link.start))
         return ends
 
+    def upstream_geometry(self, target, maximum):
+        """Return upstream polylines clipped at the watch point and range."""
+        lines = []
+        for link_id, end_distance in self.upstream(target, maximum).items():
+            link = self.links[link_id]
+            start = max(0, link.length + end_distance - maximum)
+            stop = min(link.length, link.length + end_distance)
+            if start >= stop:
+                continue
+            points = self._clip_link(link, start, stop)
+            if points:
+                lines.append(points)
+        return lines
+
+    def _clip_link(self, link, start, stop):
+        if start >= stop:
+            return []
+        points = []
+        offset = 0
+        for a, b in pairwise(link.points):
+            length = math.dist(a, b)
+            if length and offset + length > start and offset < stop:
+                fractions = [min(1, (stop - offset) / length)]
+                if not points:
+                    fractions.insert(0, max(0, (start - offset) / length))
+                for fraction in fractions:
+                    point = tuple(
+                        x + (y - x) * fraction for x, y in zip(a, b, strict=True)
+                    )
+                    points.append(
+                        tuple(round(value, 5) for value in self.unproject(point))
+                    )
+            offset += length
+        return points
+
     def match_outfalls(self, outfalls, target, maximum):
+        return {
+            key: distance
+            for key, (distance, _) in self._match_outfalls(
+                outfalls, self.upstream(target, maximum), maximum
+            ).items()
+        }
+
+    def trace_outfalls(self, outfalls, target, maximum):
+        """Return distances and shortest mapped downstream routes to the watch."""
         ends = self.upstream(target, maximum)
+        outgoing = defaultdict(list)
+        for link_id in ends:
+            link = self.links[link_id]
+            outgoing[link.start].append(link)
+        matches = self._match_outfalls(outfalls, ends, maximum)
+        paths = {}
+        for key, (_, snap) in matches.items():
+            queue = [(snap.link, snap.offset)]
+            visited = set()
+            lines = []
+            for link, offset in queue:
+                if link.id in visited:
+                    continue
+                visited.add(link.id)
+                stop = target.offset if link.id == target.link.id else link.length
+                if points := self._clip_link(link, offset, stop):
+                    lines.append(points)
+                if link.id == target.link.id:
+                    continue
+                for next_link in outgoing[link.end]:
+                    if math.isclose(
+                        ends[link.id],
+                        ends[next_link.id] + next_link.length,
+                        abs_tol=1e-6,
+                    ):
+                        queue.append((next_link, 0))
+            paths[key] = lines
+        return {key: distance for key, (distance, _) in matches.items()}, paths
+
+    def _match_outfalls(self, outfalls, ends, maximum):
         matches = {}
         for key, outfall in outfalls.items():
             if outfall.latitude is None or outfall.longitude is None:
@@ -185,5 +259,5 @@ class RiverNetwork:
                 continue
             distance = ends[closest.link.id] + closest.link.length - closest.offset
             if 0 <= distance <= maximum:
-                matches[key] = round(distance, 1)
+                matches[key] = (round(distance, 1), closest)
         return matches

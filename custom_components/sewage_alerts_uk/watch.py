@@ -186,14 +186,20 @@ class WatchEntity(CoordinatorEntity):
             "outfalls": [
                 {
                     "site_id": site["site_id"],
+                    "provider": site["provider"],
                     "company": site["company"],
                     "river": site["river"],
+                    "latitude": site.get("latitude"),
+                    "longitude": site.get("longitude"),
                     "distance_km": round(site["distance_m"] / 1000, 2),
                     "status": record.effective_status(now)
                     if (record := state.records.get(site_key(site)))
                     else "unavailable",
                     "last_discharge": record.latest_start.isoformat()
                     if record and record.latest_start
+                    else None,
+                    "latest_end": record.latest_end.isoformat()
+                    if record and record.latest_end
                     else None,
                     "discharge_duration_seconds": record.discharge_duration(now)
                     if record

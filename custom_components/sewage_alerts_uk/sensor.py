@@ -40,6 +40,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 
 class UpstreamSensor(WatchEntity, SensorEntity):
+    _unrecorded_attributes = frozenset({"river_geometry", "downstream_paths"})
+
     def __init__(self, coordinator, entry, key, name):
         super().__init__(coordinator, entry, key)
         self.key = key
@@ -69,6 +71,17 @@ class UpstreamSensor(WatchEntity, SensorEntity):
 
     async def _async_refresh_duration(self, _now):
         self.async_write_ha_state()
+
+    @property
+    def extra_state_attributes(self):
+        attributes = super().extra_state_attributes
+        if self.key == "status":
+            attributes["river_geometry"] = self.entry.data.get("river_geometry", [])
+            attributes["downstream_paths"] = self.entry.data.get("downstream_paths", {})
+            attributes["precautionary_warning"] = (
+                self.coordinator.data.possible_contamination(dt_util.utcnow())
+            )
+        return attributes
 
     @property
     def native_value(self):

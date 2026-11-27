@@ -5,7 +5,7 @@
 [![Validation](https://github.com/MrPsyware/HA-SewageAlertsUK/actions/workflows/validate.yml/badge.svg)](https://github.com/MrPsyware/HA-SewageAlertsUK/actions/workflows/validate.yml)
 [![Latest release](https://img.shields.io/github/v/release/MrPsyware/HA-SewageAlertsUK)](https://github.com/MrPsyware/HA-SewageAlertsUK/releases/latest)
 
-Get a Home Assistant alert when a water company reports a storm overflow upstream of your favourite river spot or near your local beach. You can also follow an individual outfall and show monitored sites on a dashboard map.
+Get a Home Assistant alert when a water company reports a storm overflow upstream of your favourite river spot or near your local beach. You can also follow an individual outfall and show monitored sites on the bundled dashboard card.
 
 The integration checks nine English water-company feeds every 15 minutes. **Discharge reports cannot tell you whether water is safe to enter.** Follow local bathing-water advice.
 
@@ -34,7 +34,7 @@ Download the source ZIP from the [latest release](https://github.com/MrPsyware/H
 
 [![Add Sewage Alerts UK to Home Assistant](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=sewage_alerts_uk)
 
-For one particular site, choose **Choose an individual outfall (advanced)** at the first step and search by company and river name or site ID. Add the integration again for another watch. To change a watch’s range, location, warning window or list of sites, remove that watch and set it up again.
+For one particular site, choose **Choose an individual outfall (advanced)** at the first step and search by company and river name or site ID. Add the integration again for another watch. Open the watch’s three-dot menu under **Settings → Devices & services** and choose **Reconfigure** to change its range or warning window, or search for outfalls again. Add a new watch to use a different location.
 
 ## Get a discharge alert
 

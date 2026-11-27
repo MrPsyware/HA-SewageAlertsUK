@@ -372,7 +372,7 @@ async def test_discovery_does_not_silently_ignore_failed_company(hass, network):
         ),
         patch(
             "custom_components.sewage_alerts_uk.location_flow.StormOverflowClient.fetch",
-            AsyncMock(side_effect=[{}, FeedError("offline")]),
+            AsyncMock(side_effect=[{}, FeedError("offline"), FeedError("offline")]),
         ),
         pytest.raises(FeedError, match="incomplete"),
     ):
@@ -423,3 +423,75 @@ async def test_coastal_confirm_creates_coastal_watch(hass):
     result = await flow.async_step_confirm({})
     assert result["data"]["mode"] == "coastal"
     assert result["data"]["range_km"] == 10
+
+
+def test_map_trace_clips_to_watch_point_and_range(network):
+    target = network.snap(network.links["main"], (500, 0))
+    lines = network.upstream_geometry(target, 750)
+    assert len(lines) == 3
+    ends = [[network.project(*point) for point in line] for line in lines]
+    assert ends[0][0] == pytest.approx((0, 0), abs=1)
+    assert ends[0][-1] == pytest.approx((500, 0), abs=1)
+    assert ends[1][0] == pytest.approx((-250, 0), abs=1)
+    assert ends[1][-1] == pytest.approx((0, 0), abs=1)
+    assert ends[2][0] == pytest.approx((-177, 177), abs=1)
+    assert ends[2][-1] == pytest.approx((0, 0), abs=1)
+
+
+async def test_reconfigure_warning_only_uses_saved_sites(hass):
+    flow = SewageConfigFlow()
+    flow.hass, flow.context = hass, {"source": "reconfigure"}
+    saved = SimpleNamespace(data={"mode": "upstream", "upstream_km": 8})
+    flow._get_reconfigure_entry = lambda: saved
+    flow._discover_upstream = AsyncMock()
+    flow.async_update_reload_and_abort = MagicMock()
+    form = await flow.async_step_reconfigure()
+    values = form["data_schema"]({"contamination_hours": 48})
+    assert values["range_km"] == 8
+    await flow.async_step_reconfigure(values)
+    flow._discover_upstream.assert_not_awaited()
+    flow.async_update_reload_and_abort.assert_called_once_with(
+        saved, data_updates={"contamination_hours": 48}
+    )
+
+
+async def test_reconfigure_coastal_range_waits_for_confirmation(hass):
+    flow = SewageConfigFlow()
+    flow.hass, flow.context = hass, {"source": "reconfigure"}
+    saved = SimpleNamespace(
+        data={
+            "mode": "coastal",
+            "latitude": 52,
+            "longitude": 0,
+            "river": "Example",
+            "range_km": 10,
+        }
+    )
+    flow._get_reconfigure_entry = lambda: saved
+    flow._discover_coastal = AsyncMock()
+    flow.sites = [
+        {"site_id": "A", "company": "Water", "river": "Sea", "distance_m": 100}
+    ]
+    flow.async_update_reload_and_abort = MagicMock()
+    form = await flow.async_step_reconfigure()
+    result = await flow.async_step_reconfigure(form["data_schema"]({"range_km": 5}))
+    assert result["step_id"] == "confirm"
+    flow.async_update_reload_and_abort.assert_not_called()
+    await flow.async_step_confirm({})
+    args, kwargs = flow.async_update_reload_and_abort.call_args
+    assert args == (saved,)
+    assert set(kwargs) == {"data_updates"}
+    assert kwargs["data_updates"]["range_km"] == 5
+    assert kwargs["data_updates"]["sites"] == flow.sites
+
+
+def test_outfall_downstream_path_starts_at_site_and_stops_at_watch(network):
+    target = network.snap(network.links["main"], (500, 0))
+    records = {"upper": outfall(network, -500, 0), "lower": outfall(network, 800, 0)}
+    matches, paths = network.trace_outfalls(records, target, 1200)
+    assert set(matches) == set(paths) == {"upper"}
+    assert len(paths["upper"]) == 2
+    first, last = paths["upper"]
+    assert network.project(*first[0]) == pytest.approx((-500, 0), abs=1)
+    assert first[-1] == last[0]
+    assert network.project(*last[-1]) == pytest.approx((500, 0), abs=1)

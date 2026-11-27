@@ -2,6 +2,7 @@
 
 import asyncio
 import hashlib
+import logging
 import math
 
 import voluptuous as vol
@@ -14,6 +15,12 @@ from homeassistant.helpers.selector import (
 
 from .api import FeedError, StormOverflowClient
 from .location import load_network, lookup_postcode, lookup_town
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class CompanyDiscoveryError(FeedError):
+    """One or more companies could not be checked."""
 
 
 def selection(options):
@@ -167,6 +174,67 @@ class LocationFlowMixin:
             if snap.link.routable and snap.link.form == "inlandRiver"
         }
 
+    async def async_step_reconfigure(self, user_input=None):
+        entry = self._get_reconfigure_entry()
+        data = entry.data
+        mode = data.get("mode")
+        if mode not in ("upstream", "coastal"):
+            return self.async_abort(reason="watch_reconfigure_only")
+        saved_range = data.get("range_km", data.get("upstream_km", 10))
+        errors = {}
+        if user_input is not None:
+            self.range_km = user_input["range_km"]
+            self.contamination_hours = user_input["contamination_hours"]
+            updates = {"contamination_hours": self.contamination_hours}
+            if self.range_km == saved_range and not user_input["refresh_sites"]:
+                return self.async_update_reload_and_abort(entry, data_updates=updates)
+            self.reconfigure_entry = entry
+            self.target_coords = (data["latitude"], data["longitude"])
+            if mode == "coastal":
+                self.coast_name = data["river"]
+            else:
+                self.river_name = data["river"]
+            try:
+                if mode == "coastal":
+                    await self._discover_coastal()
+                else:
+                    await self._discover_upstream(data.get("river_link_id"))
+            except CompanyDiscoveryError:
+                errors["base"] = "company_discovery_failed"
+            except FeedError:
+                errors["base"] = "river_discovery_failed"
+            else:
+                if not self.sites:
+                    errors["base"] = (
+                        "no_coastal_outfalls"
+                        if mode == "coastal"
+                        else "no_upstream_outfalls"
+                    )
+                elif len(self.sites) > 100:
+                    errors["base"] = (
+                        "too_many_coastal_outfalls"
+                        if mode == "coastal"
+                        else "too_many_outfalls"
+                    )
+                else:
+                    return await self.async_step_confirm()
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("range_km", default=saved_range): vol.All(
+                        vol.Coerce(float), vol.Range(min=1, max=25)
+                    ),
+                    vol.Required(
+                        "contamination_hours",
+                        default=data.get("contamination_hours", 96),
+                    ): vol.All(vol.Coerce(float), vol.Range(min=24, max=168)),
+                    vol.Required("refresh_sites", default=False): bool,
+                }
+            ),
+            errors=errors,
+        )
+
     async def async_step_coast(self, user_input=None):
         errors = {}
         if user_input is not None:
@@ -175,8 +243,8 @@ class LocationFlowMixin:
             self.coast_name = self.location.get("label", "Coastal area")
             try:
                 await self._discover_coastal()
-            except FeedError:
-                errors["base"] = "discovery_failed"
+            except CompanyDiscoveryError:
+                errors["base"] = "company_discovery_failed"
             else:
                 if not self.sites:
                     errors["base"] = "no_coastal_outfalls"
@@ -199,28 +267,45 @@ class LocationFlowMixin:
             errors=errors,
         )
 
-    async def _discover_coastal(self):
-        session = async_get_clientsession(self.hass)
-        latitude, longitude = self.target_coords
-        radius = self.range_km * 1000
+    async def _fetch_discovery_records(self, session, radius):
         await self._ensure_providers()
         semaphore = asyncio.Semaphore(3)
 
         async def fetch(key, provider):
             async with semaphore:
-                records = await StormOverflowClient(session, provider["url"]).fetch(
-                    center=(latitude, longitude), radius=radius
-                )
-                return key, records
+                client = StormOverflowClient(session, provider["url"])
+                for attempt in range(2):
+                    try:
+                        records = await client.fetch(
+                            center=self.target_coords, radius=radius
+                        )
+                    except FeedError:
+                        if attempt == 0:
+                            await asyncio.sleep(0.5)
+                    else:
+                        return key, records
+                return key, None
 
         responses = await asyncio.gather(
-            *(fetch(key, provider) for key, provider in self.providers.items()),
-            return_exceptions=True,
+            *(fetch(key, provider) for key, provider in self.providers.items())
         )
-        if any(isinstance(response, BaseException) for response in responses):
-            raise FeedError(
+        failed = [
+            self.providers[key]["name"] for key, records in responses if records is None
+        ]
+        if failed:
+            _LOGGER.warning(
+                "Outfall discovery could not check these feeds: %s", ", ".join(failed)
+            )
+            raise CompanyDiscoveryError(
                 "Could not check all water companies; discovery is incomplete"
             )
+        return responses
+
+    async def _discover_coastal(self):
+        session = async_get_clientsession(self.hass)
+        latitude, longitude = self.target_coords
+        radius = self.range_km * 1000
+        responses = await self._fetch_discovery_records(session, radius)
         self.sites = []
         for provider, records in responses:
             for site_id, data in records.items():
@@ -266,8 +351,10 @@ class LocationFlowMixin:
             self.target_coords = self.network.unproject(selected.point)
             try:
                 await self._discover_upstream(selected.link.id)
+            except CompanyDiscoveryError:
+                errors["base"] = "company_discovery_failed"
             except FeedError:
-                errors["base"] = "discovery_failed"
+                errors["base"] = "river_discovery_failed"
             else:
                 if not self.sites:
                     errors["base"] = "no_upstream_outfalls"
@@ -308,36 +395,35 @@ class LocationFlowMixin:
         # Extra 1 km covers snapping and small projection differences at the edge.
         radius = self.range_km * 1000 + 1000
         network = await load_network(self.hass, session, latitude, longitude, radius)
+        if link_id is None:
+            candidates = await self.hass.async_add_executor_job(
+                network.nearest, latitude, longitude, len(network.links), 10
+            )
+            link_id = next(
+                (
+                    snap.link.id
+                    for snap in candidates
+                    if snap.link.routable and snap.link.name == self.river_name
+                ),
+                None,
+            )
         if link_id not in network.links:
             raise FeedError("Selected river section disappeared")
+        self.river_link_id = link_id
         target = network.snap(
             network.links[link_id], network.project(latitude, longitude)
         )
-        await self._ensure_providers()
-        semaphore = asyncio.Semaphore(3)
-
-        async def fetch(key, provider):
-            async with semaphore:
-                records = await StormOverflowClient(session, provider["url"]).fetch(
-                    center=(latitude, longitude), radius=radius
-                )
-                return key, records
-
-        responses = await asyncio.gather(
-            *(fetch(key, provider) for key, provider in self.providers.items()),
-            return_exceptions=True,
-        )
-        if any(isinstance(response, BaseException) for response in responses):
-            raise FeedError(
-                "Could not check all water companies; discovery is incomplete"
-            )
+        responses = await self._fetch_discovery_records(session, radius)
         records = {
             f"{provider}:{site_id}": outfall
             for provider, outfalls in responses
             for site_id, outfall in outfalls.items()
         }
-        matches = await self.hass.async_add_executor_job(
-            network.match_outfalls, records, target, self.range_km * 1000
+        matches, self.downstream_paths = await self.hass.async_add_executor_job(
+            network.trace_outfalls, records, target, self.range_km * 1000
+        )
+        self.river_geometry = await self.hass.async_add_executor_job(
+            network.upstream_geometry, target, self.range_km * 1000
         )
         self.sites = []
         for key, distance in sorted(matches.items(), key=lambda item: item[1]):
@@ -365,10 +451,6 @@ class LocationFlowMixin:
             latitude, longitude = self.target_coords
             mode = "coastal" if hasattr(self, "coast_name") else "upstream"
             identity = f"{mode}:{latitude:.5f}:{longitude:.5f}:{self.range_km:g}"
-            await self.async_set_unique_id(
-                "watch_" + hashlib.sha256(identity.encode()).hexdigest()[:20]
-            )
-            self._abort_if_unique_id_configured()
             title = (
                 f"{self.coast_name} coastal watch"
                 if mode == "coastal"
@@ -383,6 +465,17 @@ class LocationFlowMixin:
                 "river": watch_name,
                 "sites": self.sites,
             }
+            if mode == "upstream":
+                data["river_geometry"] = getattr(self, "river_geometry", [])
+                data["downstream_paths"] = getattr(self, "downstream_paths", {})
+            if mode == "upstream" and hasattr(self, "river_link_id"):
+                data["river_link_id"] = self.river_link_id
+            if entry := getattr(self, "reconfigure_entry", None):
+                return self.async_update_reload_and_abort(entry, data_updates=data)
+            await self.async_set_unique_id(
+                "watch_" + hashlib.sha256(identity.encode()).hexdigest()[:20]
+            )
+            self._abort_if_unique_id_configured()
             return self.async_create_entry(
                 title=title,
                 data=data,

@@ -5,10 +5,11 @@
     "@MrPsyware"
   ],
   "config_flow": true,
+  "dependencies": ["http"],
   "documentation": "https://github.com/MrPsyware/HA-SewageAlertsUK",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/MrPsyware/HA-SewageAlertsUK/issues",
   "requirements": [],
-  "version": "0.6.1"
+  "version": "0.7.0"
 }

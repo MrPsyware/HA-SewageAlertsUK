@@ -78,9 +78,18 @@
           "contamination_hours": "Precautionary contamination window (hours, 24–168)"
         }
       },
+      "reconfigure": {
+        "title": "Reconfigure your watch",
+        "description": "River watches measure distance upstream. Coastal watches measure a radius from your saved location. A range change or outfall refresh lets you review the new matches before saving.",
+        "data": {
+          "range_km": "Range (km, 1–25)",
+          "contamination_hours": "Precautionary contamination window (hours, 24–168)",
+          "refresh_sites": "Search again for monitored outfalls"
+        }
+      },
       "confirm": {
         "title": "Confirm monitoring area",
-          "description": "Monitor {count} matched outfalls in the {range} km {river} watch at {latitude}, {longitude}.\n\n{outfalls}\n\nRiver matches follow the mapped network and include connected upstream links. Coastal matches use geographic distance around the location. Coverage is limited to supported English water-company feeds and is not exhaustive.\n\nThe selected set is saved at setup; recreate this watch to change location/range or discover new outfalls."
+          "description": "Monitor {count} matched outfalls in the {range} km {river} watch at {latitude}, {longitude}.\n\n{outfalls}\n\nRiver matches follow the mapped network and include connected upstream links. Coastal matches use geographic distance around the location. Coverage is limited to supported English water-company feeds and is not exhaustive.\n\nUse Reconfigure to change the range or search for outfalls again."
       }
     },
     "error": {
@@ -92,13 +101,16 @@
       "location_not_found": "No location found. Check the postcode or town name.",
       "outside_coverage": "This location is outside the current search area. Discharge feeds currently cover England.",
       "no_rivers": "No supported non-tidal river found within 5 km. Try coordinates nearer the river.",
-      "discovery_failed": "Unable to complete river tracing and check all company feeds. Retry or use a smaller range.",
+      "company_discovery_failed": "One or more water-company feeds could not be checked. Try again later. Home Assistant logs list the affected companies.",
+      "river_discovery_failed": "Unable to load or trace the selected river section. Retry, choose another section, or use a smaller upstream range.",
       "no_upstream_outfalls": "No unambiguous upstream outfalls found in the supported feeds. Try another river section or a larger range. This does not mean there are no discharges.",
     "too_many_outfalls": "More than 100 upstream outfalls were found. Reduce the upstream range.",
     "no_coastal_outfalls": "No supported outfalls were found within this coastal radius. Try a larger radius or check the location.",
     "too_many_coastal_outfalls": "More than 100 coastal outfalls were found. Reduce the radius."
     },
     "abort": {
+      "watch_reconfigure_only": "Reconfiguration is available for river and coastal watches.",
+      "reconfigure_successful": "Watch updated.",
       "already_configured": "This outfall is already configured."
     }
   }
