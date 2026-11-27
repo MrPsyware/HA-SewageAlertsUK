@@ -1,305 +1,61 @@
 # Sewage Alerts UK
 
-![Sewage Alerts UK — Know what’s flowing upstream.](https://raw.githubusercontent.com/MrPsyware/HA-SewageAlertsUK/main/assets/banner.png)
+![Sewage Alerts UK banner](https://raw.githubusercontent.com/MrPsyware/HA-SewageAlertsUK/main/assets/banner.png)
 
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/MrPsyware/HA-SewageAlertsUK)
-[![Validate](https://github.com/MrPsyware/HA-SewageAlertsUK/actions/workflows/validate.yml/badge.svg)](https://github.com/MrPsyware/HA-SewageAlertsUK/actions/workflows/validate.yml)
-[![Release](https://img.shields.io/github/v/release/MrPsyware/HA-SewageAlertsUK)](https://github.com/MrPsyware/HA-SewageAlertsUK/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](LICENSE)
+[![Validation](https://github.com/MrPsyware/HA-SewageAlertsUK/actions/workflows/validate.yml/badge.svg)](https://github.com/MrPsyware/HA-SewageAlertsUK/actions/workflows/validate.yml)
+[![Latest release](https://img.shields.io/github/v/release/MrPsyware/HA-SewageAlertsUK)](https://github.com/MrPsyware/HA-SewageAlertsUK/releases/latest)
 
-A Home Assistant custom integration that monitors reported sewage discharges
-**upstream of a chosen point on your local river**. No account or API key is
-required. Current discharge feeds cover nine English water companies.
+Get a Home Assistant alert when a water company reports a storm overflow upstream of your favourite river spot or near your local beach. You can also follow an individual outfall and show monitored sites on a dashboard map.
 
-It also supports **coastal watches**: choose a coastal radius around your home
-and nearby beach/coastal outfalls are grouped into one watch device.
+The integration checks nine English water-company feeds every 15 minutes. **Discharge reports cannot tell you whether water is safe to enter.** Follow local bathing-water advice.
 
-## Install through HACS
+## Installation
 
-Requires **Home Assistant 2026.9.4 or later** and a working HACS installation.
+Requires **Home Assistant 2026.9.4 or later**. Sewage Alerts UK is currently available as a custom repository.
 
-[![Open this repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MrPsyware&repository=HA-SewageAlertsUK&category=integration)
+[![Open Sewage Alerts UK in your Home Assistant store](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MrPsyware&repository=HA-SewageAlertsUK&category=integration)
 
-Or add it manually:
+- **Home Assistant 2026.11 or newer** — Open **Settings → Marketplace → Add from link**. Enter `https://github.com/MrPsyware/HA-SewageAlertsUK`, connect GitHub if prompted, and select **Add**. Open **Sewage Alerts UK**, select **Install**, then restart Home Assistant.
+- **Home Assistant 2026.9.4 through 2026.10** — In HACS, open **⋮ → Custom repositories**, enter the same URL and select **Integration**. Download **Sewage Alerts UK**, then restart Home Assistant.
 
-1. Open **HACS → ⋮ → Custom repositories**.
-2. Enter `https://github.com/MrPsyware/HA-SewageAlertsUK` and select **Integration**.
-3. Find **Sewage Alerts UK**, download the latest release, then restart Home Assistant.
-4. Follow the configuration steps below.
+<details>
+<summary>Manual installation</summary>
 
-This is a **custom repository**, not yet part of the HACS default catalogue.
-HACS handles updates from this repository's GitHub releases. Icons are bundled
-with the integration for Home Assistant; the HACS catalogue may show a generic
-icon depending on the HACS version.
+Download the source ZIP from the [latest release](https://github.com/MrPsyware/HA-SewageAlertsUK/releases/latest). Copy the extracted `custom_components/sewage_alerts_uk` directory into your Home Assistant configuration directory so it contains `custom_components/sewage_alerts_uk/manifest.json`. Restart Home Assistant.
 
-## Manual installation
+</details>
 
-1. Download the source ZIP from the [latest release](https://github.com/MrPsyware/HA-SewageAlertsUK/releases/latest).
-2. Copy `custom_components/sewage_alerts_uk` from the extracted archive to
-   `/config/custom_components/sewage_alerts_uk` on Home Assistant.
-3. Restart Home Assistant.
+## Set up a watch
 
-## Configure
+1. Go to **Settings → Devices & services → Add integration** and search for **Sewage Alerts UK**.
+2. Choose your home location, a postcode, a town or village, or enter coordinates. For a particular beach or river bend, use coordinates for that spot.
+3. Choose **River and upstream outfalls** to follow a mapped river section and its tributaries, or **Coastal area and beach outfalls** to search a circle around your point. Both default to 10 km and accept 1–25 km.
+4. Choose how long the **Possible contamination** warning should stay on after a reported discharge ends. The default is four days (96 hours). Review the list of outfalls and confirm.
 
-[![Add the integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=sewage_alerts_uk)
+[![Add Sewage Alerts UK to Home Assistant](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=sewage_alerts_uk)
 
-1. Open **Settings → Devices & services → Add integration → Sewage Alerts UK**.
-2. Use your **Home Assistant home location**, enter a **postcode**, search for a
-   **town/village**, or enter **latitude and longitude**. Coordinates are prefilled
-   from your HA home location and can be adjusted.
-3. Confirm the location result for a postcode/town search.
-4. Choose a nearby **river section**. The nearest supported section is the default;
-   its coordinates and distance from your location are shown. If needed, use
-   coordinates for the particular stretch of river you care about.
-5. Set the **upstream distance**, from 1 to 25 km (default 10 km). This measures
-   distance along the river, including connected tributaries, not a circular radius.
-6. Review the matched upstream outfalls and confirm.
+For one particular site, choose **Choose an individual outfall (advanced)** at the first step and search by company and river name or site ID. Add the integration again for another watch. To change a watch’s range, location, warning window or list of sites, remove that watch and set it up again.
 
-The integration searches across all supported companies; you do not need to know
-which company operates an outfall. A failed company lookup blocks initial
-confirmation rather than silently creating an incomplete selection.
+## Get a discharge alert
 
-The selected outfalls are saved when the watch is created. To change its location,
-range, or discover newly added outfalls, remove the watch and create it again.
-Existing individual-outfall entries from v0.1 continue to work. The setup menu
-retains **Choose an individual outfall (advanced)** for manual monitoring.
+In the automation editor, choose your watch’s **Upstream discharging** or **Coastal discharging** entity as a state trigger, set **To** to **On**, and choose a notification action. Leave **From** empty to catch a discharge first reported after a feed outage.
 
-Tested with Home Assistant Core 2026.9.4. This is an early release; review the
-matched outfalls and the coverage limitations below before using automations.
-
-## Entities and automations
-
-Each upstream watch creates one device with:
-
-| Entity | Meaning |
+| Watch state | What it means |
 | --- | --- |
-| Upstream discharging | `on` if any selected outfall reports a discharge; `off` only when all selected outfalls have usable reports saying they are not discharging; otherwise `unknown` |
-| Upstream status | `discharging`, `no_reported_discharges`, or `unknown` |
-| Reported active outfalls | Count of selected outfalls with usable reports of active discharge; a lower bound when data is missing |
-| Outfalls with unknown status | Count with offline, missing or unavailable reports |
-| Latest discharge | Start time of the most recently started reported discharge |
-| Latest discharge duration | Duration of that latest event; ticks every minute while it is active |
-| Possible contamination | `on` during the configured precautionary window after a reported discharge |
-| Estimated contamination until | End of that precautionary window |
-| Estimated contamination remaining | Remaining time in seconds; ticks every minute |
+| On | At least one monitored outfall reports a discharge. |
+| Off | Every monitored outfall reports that it is currently inactive. |
+| Unknown | Some reports are missing or offline and none confirms an active discharge. |
 
-Attributes include the monitored outfalls, company, receiving watercourse,
-upstream distance, current status, and any companies whose requests failed.
-Individual company failures do not hide a known discharge from another company.
+The watch also shows how many sites are active or unknown, when the latest discharge started, and its duration. **Possible contamination** stays on during a known discharge and for your chosen window afterwards. While a discharge is active its end time is unknown. [Dashboard maps and example automations](docs/dashboards.md)
 
-Example: replace the entity ID below with your watch's binary sensor. This alerts
-when an `on` state is newly observed, including after a monitoring outage.
+## Coverage and privacy
 
-```yaml
-alias: Upstream sewage discharge alert
-triggers:
-  - trigger: state
-    entity_id: binary_sensor.river_severn_upstream_upstream_discharging
-    to: "on"
-actions:
-  - action: persistent_notification.create
-    data:
-      title: Upstream sewage discharge reported
-      message: >-
-        {{ trigger.to_state.name }} is reporting an upstream discharge.
-        Check the watch's outfall statuses for details.
-mode: single
-```
+Feeds cover Anglian Water, Northumbrian Water, Severn Trent Water, South West Water, Southern Water, Thames Water, United Utilities, Wessex Water and Yorkshire Water. Other UK providers are outside the current coverage. River watches can miss unmapped streams and exclude tidal sections and canals. Coastal watches include any outfall in the radius, including inland sites. Tides and currents can carry pollution across that boundary.
 
-You can also select the entity in Home Assistant's automation editor. Use the
-unknown-status count for a separate monitoring-problem alert.
+Postcode and town searches go to Postcodes.io during setup. Entering coordinates skips that lookup. Mapping services receive coordinates to find rivers and outfalls. A coastal watch created from a postcode or town can include that location in its device name. Keep this in mind when sharing dashboard screenshots.
 
-### Map and outfall details
+## Support and development
 
-Version 0.6 adds a native Home Assistant geolocation marker for every monitored
-outfall. All markers are available from the `sewage_alerts_uk` geolocation source,
-and currently discharging markers are also exposed through
-`sewage_alerts_uk_active`. Add either card to a dashboard:
+[Report an issue](https://github.com/MrPsyware/HA-SewageAlertsUK/issues) · [Release notes](CHANGELOG.md) · [Developer guide and data sources](docs/development.md) · [Contributing](CONTRIBUTING.md)
 
-```yaml
-type: map
-title: Nearby sewage outfalls
-geo_location_sources:
-  - sewage_alerts_uk
-auto_fit: true
-hours_to_show: 0
-```
-
-To show only outfalls currently reporting a discharge, use the active source:
-
-```yaml
-type: map
-title: Active sewage discharges
-geo_location_sources:
-  - sewage_alerts_uk_active
-auto_fit: true
-hours_to_show: 0
-```
-
-Each marker includes the site ID, company, receiving watercourse, current status,
-last discharge start, event duration, and estimated contamination window. A details
-card can sit beside the map (replace the entity IDs with your watch):
-
-```yaml
-type: entities
-title: River Example sewage watch
-show_header_toggle: false
-entities:
-  - binary_sensor.example_river_upstream_discharging
-  - binary_sensor.example_river_possible_contamination
-  - sensor.example_river_latest_discharge
-  - sensor.example_river_latest_discharge_duration
-  - sensor.example_river_estimated_contamination_until
-  - sensor.example_river_estimated_contamination_remaining
-```
-
-For a richer single-card summary, a Markdown card can list every monitored outfall:
-
-```yaml
-type: markdown
-title: Outfall details
-content: >-
-  {% set outfalls = state_attr('sensor.example_river_upstream_status', 'outfalls') or [] %}
-  {% for outfall in outfalls %}
-  **{{ outfall.site_id }} — {{ outfall.company }}**  
-  {{ outfall.river or 'Unnamed watercourse' }} · {{ outfall.status }} ·
-  {{ outfall.distance_km }} km away  
-  Last discharge: {{ outfall.last_discharge or 'No recorded discharge' }}
-
-  {% endfor %}
-```
-
-The map shows monitored discharge points and their reported state; it is not a
-model of tidal flow, plume movement, bathing-water quality, or the area actually
-affected by a discharge.
-
-Manual outfall entries provide status, last discharge, discharge duration, start/end
-timestamps and source update time. A duration is the time from the latest event
-start to its end; while an event is active it ticks up every minute from its start.
-The latest end timestamp may belong to a previous discharge while a new one is active.
-
-During setup, river and coastal watches ask for a precautionary contamination
-window from 24 to 168 hours. It defaults to **96 hours (four days)**. This is a
-deliberately simple warning window: the feed does not contain bacteria levels,
-discharge volume, rainfall, river flow, tide, currents, dilution or travel time.
-The window starts when the latest reported discharge ends; while a discharge is
-ongoing, the warning remains on and the end time is unknown. A new discharge
-extends the window. You can choose 48 hours if you prefer a shorter practical
-alert, or 96 hours for the more cautious interpretation.
-
-The four-day default is informed by [Thames Water's open-water guidance](https://www.thameswater.co.uk/about-us/performance/river-health/frequently-asked-questions/information-about-storm-discharge),
-which says clearance can take up to four days, while general public guidance often
-uses 24–48 hours. It is not a safety certification; follow local signs and official
-water-quality advice before entering water.
-
-## How upstream selection works
-
-The integration queries an ArcGIS-hosted copy of **OS Open Rivers**, snaps your
-chosen location onto the selected river section, and walks the river links
-backwards using their start/end nodes and explicit flow direction. It includes
-connected tributaries and river links through lakes, and clips the selection at
-the chosen point and upstream distance. Tidal links, canals and links without a
-supported flow direction are not traced.
-
-Outfalls are matched to their nearest mapped river link within 100 metres. This
-search considers all nearby links, not only the upstream links, so downstream
-outfalls and neighbouring rivers are not incorrectly pulled into the upstream
-selection. Matches with another river link within 10 metres of the best match's
-snap distance are excluded as ambiguous, including some confluence locations.
-Distances are approximate, using a local metre projection and river polylines.
-
-**This is a mapped estimate, not exhaustive upstream coverage.** The open river
-network is generalised: small streams, culverts, unmapped connections and distant
-outfall coordinates can be missed. Ambiguous matches are intentionally omitted.
-Review the selected outfalls; zero matches does not imply zero discharge. The
-setup will not create a watch with zero matched outfalls.
-
-Reports describe storm-overflow activity, not sewage concentration, pollutant
-travel time or measured river water quality. `off` means no selected monitor is
-currently reporting a discharge, not that a river is clean. This does not
-reproduce SewageMap's downstream-impact model.
-
-## How coastal watches work
-
-Choose **Coastal area and beach outfalls** after selecting your location. The
-radius is geographic distance from that point, up to 25 km. All supported-company
-outfalls returned by the public feeds within the radius are grouped into one
-coastal watch. Their attributes include the receiving watercourse/name and exact
-coordinates where supplied.
-
-Coastal watches do not model tides, currents, dilution, plume direction, bathing
-water boundaries, or whether an outfall is on the same beach. A nearby outfall can
-affect a different stretch of coast depending on conditions, and a discharge
-outside the radius can still affect the area. Treat this as a nearby-outfall alert
-group rather than a water-quality or beach-safety determination.
-
-## Updates and missing data
-
-The selected outfalls are polled every 15 minutes, with one query per company.
-Requests have timeouts and handle ArcGIS pagination. Monitoring does not repeat
-location lookups or river-network downloads.
-
-An offline monitor, unknown status, missing outfall or failed company request is
-treated as unknown by the upstream watch. Water-company feeds are event-driven:
-some providers update `LastUpdated` only when an overflow event or state change is
-recorded. An old `LastUpdated` value therefore does not by itself make the current
-`Status` unusable. The integration trusts the provider's current status and exposes
-the source timestamp separately so you can judge feed freshness.
-
-A failed request for a manual single-outfall entry makes its entities unavailable.
-Home Assistant records observed changes according to Recorder settings; there is
-no historical backfill, and brief events between polls can be missed.
-
-## Coverage, data and privacy
-
-Supported discharge feeds: Anglian Water, Northumbrian Water, Severn Trent Water,
-South West Water, Southern Water, Thames Water, United Utilities, Wessex Water and
-Yorkshire Water. Welsh, Scottish and Northern Irish providers are not included.
-Cross-border upstream catchments may therefore have incomplete discharge coverage.
-
-- Overflow data: individual companies through Stream's
-  [National Storm Overflow Hub](https://www.arcgis.com/apps/mapviewer/index.html?webmap=d0d61f9f88a34ef5adb83dbff938c537).
-  Public layer URLs are recorded in `providers.json`. Retain company attribution
-  when sharing their data and consult each layer's licensing terms.
-- River mapping: [OS Open Rivers](https://www.ordnancesurvey.co.uk/products/os-open-rivers),
-  queried via [this ArcGIS layer](https://services.arcgis.com/qHLhLQrcvEnxjtPr/arcgis/rest/services/OS_OpenRivers/FeatureServer/0).
-  Contains OS data © Crown copyright and database right 2026, under the
-  [Open Government Licence](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
-  The hosted service is an external dependency and may change or become unavailable.
-- Postcodes and towns: [Postcodes.io](https://postcodes.io/), using its postcode
-  lookup and OS Open Names place search. See its [data licences](https://postcodes.io/docs/licences/).
-
-Postcode/town searches are sent to Postcodes.io only during setup. Location
-coordinates are sent to the river and company mapping services for spatial
-queries. The saved watch stores the selected river point and outfalls, not the
-original postcode or town query. Direct coordinates skip geocoding.
-
-Inspired by [SewageMap](https://www.sewagemap.co.uk/) and its
-[documented data sources](https://github.com/AlexLipp/sewage-map). This project is
-independent of SewageMap and does not copy its code or use private endpoints.
-
-## Development
-
-```sh
-python -m venv .venv
-.venv/bin/pip install -r requirements-dev.txt
-.venv/bin/python -m pytest -q
-```
-
-Tests cover graph direction, tributaries, same-link downstream exclusion, distance
-along bends, cycles, ambiguous snapping, geocoding, setup flows, source failures,
-and conservative aggregate states. They use real Home Assistant classes and
-recorded public overflow samples retrieved on 27 September 2026.
-
-Optional public-service smoke test (uses Shrewsbury, not your home location):
-
-```sh
-.venv/bin/python -m pytest tests/test_live.py --run-live -qs
-```
-
-## Support and licence
-
-Report problems through [GitHub issues](https://github.com/MrPsyware/HA-SewageAlertsUK/issues).
-See [release notes](CHANGELOG.md), [contribution guidance](CONTRIBUTING.md),
-and [artwork and generation prompts](assets/README.md).
-Original code is MIT licensed; external datasets retain their own licences (see [NOTICE](NOTICE)).
+Original code is available under the [MIT licence](LICENSE). Contains OS data © Crown copyright and database right 2026. Water-company and mapping data retain their respective licences. [Data credits](NOTICE)

@@ -13,7 +13,7 @@ PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.GEO_LOCATION]
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = (
         WatchCoordinator(hass, entry)
-        if entry.data.get("mode") == "upstream"
+        if entry.data.get("mode") in ("upstream", "coastal")
         else SewageCoordinator(hass, entry)
     )
     await coordinator.async_config_entry_first_refresh()

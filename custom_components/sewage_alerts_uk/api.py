@@ -126,13 +126,17 @@ class StormOverflowClient:
                     }
                     if center is not None:
                         latitude, longitude = center
+                        # Some layers reject ArcGIS distance queries. Enclose the
+                        # radius in a box; discovery then checks exact distances.
+                        lat_span = math.degrees(radius / 6371008.8)
+                        lon_span = lat_span / math.cos(
+                            math.radians(abs(latitude) + lat_span)
+                        )
                         params.update(
                             {
-                                "geometry": f"{longitude},{latitude}",
-                                "geometryType": "esriGeometryPoint",
+                                "geometry": f"{longitude - lon_span},{latitude - lat_span},{longitude + lon_span},{latitude + lat_span}",
+                                "geometryType": "esriGeometryEnvelope",
                                 "inSR": "4326",
-                                "distance": str(radius),
-                                "units": "esriSRUnit_Meter",
                                 "spatialRel": "esriSpatialRelIntersects",
                             }
                         )

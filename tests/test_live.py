@@ -33,7 +33,7 @@ async def test_live_shrewsbury_discovery(hass, request):
                 if "severn" in snap.link.name.lower()
             )
             result = await flow.async_step_river(
-                {"river": selected.link.id, "upstream_km": 10}
+                result["data_schema"]({"river": selected.link.id, "upstream_km": 10})
             )
         assert result["step_id"] == "confirm", result.get("errors")
         assert flow.sites

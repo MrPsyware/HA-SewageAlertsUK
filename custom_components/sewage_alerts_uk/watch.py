@@ -22,6 +22,34 @@ def site_key(site):
     return f"{site['provider']}:{site['site_id']}"
 
 
+def precautionary_window(records, hours, now):
+    """Return the warning state and its end, if all reports establish one."""
+    latest_end = None
+    incomplete = False
+    for record in records:
+        if record and record.status == "discharging":
+            return True, None
+        if (
+            record
+            and record.latest_end
+            and (latest_end is None or record.latest_end > latest_end)
+        ):
+            latest_end = record.latest_end
+        if (
+            not record
+            or record.status != "not_discharging"
+            or (
+                record.latest_start
+                and (not record.latest_end or record.latest_start > record.latest_end)
+            )
+        ):
+            incomplete = True
+    until = latest_end + timedelta(hours=hours) if latest_end else None
+    if incomplete or not records:
+        return (True if until and until > now else None), None
+    return (until is not None and until > now), until
+
+
 @dataclass
 class WatchState:
     records: dict
@@ -60,21 +88,14 @@ class WatchState:
         return latest.discharge_duration(now)
 
     def contamination_until(self, now):
-        """Conservative end of the configured precautionary window."""
-        window = timedelta(hours=self.contamination_hours)
-        candidates = []
-        for record in self.records.values():
-            if not record:
-                continue
-            if record.status == "discharging":
-                candidates.append(now + window)
-            elif record.latest_end:
-                candidates.append(record.latest_end + window)
-        return max(candidates, default=None)
+        return precautionary_window(
+            self.records.values(), self.contamination_hours, now
+        )[1]
 
     def possible_contamination(self, now):
-        until = self.contamination_until(now)
-        return until is not None and until > now
+        return precautionary_window(
+            self.records.values(), self.contamination_hours, now
+        )[0]
 
     def contamination_remaining(self, now):
         until = self.contamination_until(now)

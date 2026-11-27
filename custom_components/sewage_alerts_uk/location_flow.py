@@ -120,6 +120,7 @@ class LocationFlowMixin:
 
     async def async_step_area(self, user_input=None):
         """Choose a directed river watch or a geographic coastal watch."""
+        errors = {}
         if user_input is not None:
             if user_input["area_type"] == "coast":
                 self.target_coords = (
@@ -128,15 +129,16 @@ class LocationFlowMixin:
                 )
                 return await self.async_step_coast()
             try:
-                return await self._load_river_candidates()
+                await self._load_river_candidates()
             except FeedError:
-                self.location_error = "cannot_connect"
-                return self.async_show_form(
-                    step_id="area",
-                    data_schema=self._area_schema(),
-                    errors={"base": self.location_error},
-                )
-        return self.async_show_form(step_id="area", data_schema=self._area_schema())
+                errors["base"] = "cannot_connect"
+            else:
+                if self.rivers:
+                    return await self.async_step_river()
+                errors["base"] = "no_rivers"
+        return self.async_show_form(
+            step_id="area", data_schema=self._area_schema(), errors=errors
+        )
 
     @staticmethod
     def _area_schema():
@@ -153,24 +155,17 @@ class LocationFlowMixin:
 
     async def _load_river_candidates(self):
         latitude, longitude = self.location["latitude"], self.location["longitude"]
-        try:
-            self.network = await load_network(
-                self.hass, async_get_clientsession(self.hass), latitude, longitude, 5000
-            )
-            candidates = await self.hass.async_add_executor_job(
-                self.network.nearest, latitude, longitude, 30
-            )
-            self.rivers = {
-                snap.link.id: snap
-                for snap in candidates
-                if snap.link.routable and snap.link.form == "inlandRiver"
-            }
-        except FeedError:
-            self.location_error = "cannot_connect"
-            return None
-        if not self.rivers:
-            raise FeedError("No supported river found")
-        return await self.async_step_river()
+        self.network = await load_network(
+            self.hass, async_get_clientsession(self.hass), latitude, longitude, 5000
+        )
+        candidates = await self.hass.async_add_executor_job(
+            self.network.nearest, latitude, longitude, 30
+        )
+        self.rivers = {
+            snap.link.id: snap
+            for snap in candidates
+            if snap.link.routable and snap.link.form == "inlandRiver"
+        }
 
     async def async_step_coast(self, user_input=None):
         errors = {}

@@ -8,8 +8,10 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
+from custom_components.sewage_alerts_uk import PLATFORMS, async_setup_entry
 from custom_components.sewage_alerts_uk.api import (
     FeedError,
     StormOverflowClient,
@@ -20,6 +22,7 @@ from custom_components.sewage_alerts_uk.binary_sensor import DischargingSensor
 from custom_components.sewage_alerts_uk.config_flow import SewageConfigFlow
 from custom_components.sewage_alerts_uk.coordinator import SewageCoordinator
 from custom_components.sewage_alerts_uk.sensor import SewageSensor
+from custom_components.sewage_alerts_uk.watch import WatchCoordinator
 
 SAMPLES = json.loads(Path(__file__).with_name("feed_samples.json").read_text())
 NOW = datetime.now(UTC)
@@ -201,6 +204,46 @@ async def test_coordinator_missing_site_and_recovery(hass, outfall):
         await coordinator._async_update_data()
     coordinator.client.fetch.return_value = {"SVT00001": outfall}
     assert await coordinator._async_update_data() == outfall
+
+
+@pytest.mark.parametrize("mode", ["upstream", "coastal", "manual"])
+async def test_setup_entry_refreshes_saved_sites(hass, outfall, mode):
+    saved = entry()
+    if mode != "manual":
+        saved.data = {"mode": mode, "sites": [saved.data]}
+    saved.state = ConfigEntryState.SETUP_IN_PROGRESS
+    hass.config_entries = MagicMock(async_forward_entry_setups=AsyncMock())
+    with (
+        patch("custom_components.sewage_alerts_uk.coordinator.async_get_clientsession"),
+        patch("custom_components.sewage_alerts_uk.watch.async_get_clientsession"),
+        patch.object(
+            StormOverflowClient,
+            "fetch",
+            AsyncMock(return_value={outfall.site_id: outfall}),
+        ),
+    ):
+        assert await async_setup_entry(hass, saved)
+    hass.config_entries.async_forward_entry_setups.assert_awaited_once_with(
+        saved, PLATFORMS
+    )
+    if mode == "manual":
+        assert saved.runtime_data.data == outfall
+    else:
+        assert isinstance(saved.runtime_data, WatchCoordinator)
+        assert list(saved.runtime_data.data.records.values()) == [outfall]
+
+
+async def test_discovery_requests_enclosing_box():
+    session = mock_session({"features": []})
+    await StormOverflowClient(session, "https://example.test").fetch(
+        center=(53, -2), radius=1000
+    )
+    params = session.get.call_args.kwargs["params"]
+    assert params["geometryType"] == "esriGeometryEnvelope"
+    west, south, east, north = map(float, params["geometry"].split(","))
+    assert west < -2.014 < -2 < -1.986 < east
+    assert south < 52.992 < 53 < 53.008 < north
+    assert "distance" not in params
 
 
 async def test_flow_search_and_selection(hass, outfall):

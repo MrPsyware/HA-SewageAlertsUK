@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.1 — 2026-11-27
+
+- Load saved coastal watches when Home Assistant starts.
+- Use a spatial query supported by all nine feeds for river and coastal discovery.
+- Keep river setup usable when the map service fails or no river is nearby.
+- Keep the warning on for an active discharge and wait for a reported end before
+  showing a countdown. Missing reports now give an unknown warning state unless
+  another report establishes an active discharge or precautionary window.
+- Update Marketplace installation steps and the dashboard map example.
+
 ## 0.6.0 — 2026-11-03
 
 - Add a separate `sewage_alerts_uk_active` geolocation source for currently

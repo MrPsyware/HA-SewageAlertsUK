@@ -5,6 +5,8 @@ Include the Home Assistant and integration versions when reporting a problem.
 Do not include your home coordinates, full postcode, access tokens or unredacted
 Home Assistant diagnostics in a public issue.
 
+For the feed contracts, river matching and entity behaviour, see the [developer guide](docs/development.md).
+
 ## Local checks
 
 Use Python 3.14, matching the supported Home Assistant release.
@@ -32,5 +34,4 @@ along the network, not just proximity.
 
 HACS installs the integration directory directly from the release tag. No ZIP
 asset is required. The release workflow verifies that the tag and manifest match.
-The project is a HACS custom repository; default-store inclusion is a separate
-submission and is not implied by a release.
+For catalogue inclusion, follow the [Marketplace submission guide](docs/marketplace.md).

@@ -8,7 +8,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from .const import ATTRIBUTION, DOMAIN
-from .watch import site_key
+from .watch import precautionary_window, site_key
 
 SOURCE = DOMAIN
 ACTIVE_SOURCE = f"{DOMAIN}_active"
@@ -29,9 +29,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 "distance_m": None,
             }
         ]
-    async_add_entities(
-        OutfallLocation(coordinator, entry, site) for site in sites
-    )
+    async_add_entities(OutfallLocation(coordinator, entry, site) for site in sites)
 
 
 class OutfallLocation(CoordinatorEntity, GeolocationEvent):
@@ -68,12 +66,20 @@ class OutfallLocation(CoordinatorEntity, GeolocationEvent):
     @property
     def latitude(self):
         record = self._record()
-        return record.latitude if record and record.latitude is not None else self.site.get("latitude")
+        return (
+            record.latitude
+            if record and record.latitude is not None
+            else self.site.get("latitude")
+        )
 
     @property
     def longitude(self):
         record = self._record()
-        return record.longitude if record and record.longitude is not None else self.site.get("longitude")
+        return (
+            record.longitude
+            if record and record.longitude is not None
+            else self.site.get("longitude")
+        )
 
     @property
     def distance(self):
@@ -85,16 +91,9 @@ class OutfallLocation(CoordinatorEntity, GeolocationEvent):
         record = self._record()
         now = dt_util.utcnow()
         status = record.effective_status(now) if record else "unavailable"
-        contamination_until = None
-        if record:
-            if record.status == "discharging":
-                contamination_until = now + timedelta(
-                    hours=float(self.entry.data.get("contamination_hours", 96))
-                )
-            elif record.latest_end:
-                contamination_until = record.latest_end + timedelta(
-                    hours=float(self.entry.data.get("contamination_hours", 96))
-                )
+        warning, contamination_until = precautionary_window(
+            [record], self.entry.data.get("contamination_hours", 96), now
+        )
         return {
             "site_id": self.site_id,
             "company": self.site["company"],
@@ -107,9 +106,7 @@ class OutfallLocation(CoordinatorEntity, GeolocationEvent):
             "discharge_duration_seconds": record.discharge_duration(now)
             if record
             else None,
-            "possible_contamination": bool(
-                contamination_until and contamination_until > now
-            ),
+            "possible_contamination": warning,
             "contamination_until": contamination_until,
         }
 

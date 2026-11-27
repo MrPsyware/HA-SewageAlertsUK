@@ -196,8 +196,15 @@ def test_precautionary_contamination_window(network):
     active = replace(outfall(network, 100, 0), status="discharging", latest_end=None)
     state = WatchState({"ended": ended, "active": active}, [], 48)
     assert state.possible_contamination(now) is True
-    assert state.contamination_remaining(now) == 172800
-    assert state.contamination_until(now) == now + timedelta(hours=48)
+    assert state.contamination_remaining(now) is None
+    assert state.contamination_until(now) is None
+    partial = WatchState({"ended": ended, "missing": None}, [], 48)
+    assert partial.possible_contamination(now) is True
+    assert partial.contamination_until(now) is None
+    assert partial.possible_contamination(now + timedelta(hours=48)) is None
+    assert (
+        WatchState({"ended": ended}, [], 48).contamination_remaining(now) == 36 * 3600
+    )
     finished = WatchState(
         {"ended": replace(ended, latest_end=now - timedelta(hours=49))}, [], 48
     )
@@ -284,6 +291,30 @@ async def test_location_menu_and_coordinates(hass, network):
     assert (
         result["data_schema"]({"river": "main", "upstream_km": 10})["upstream_km"] == 10
     )
+
+
+@pytest.mark.parametrize(
+    "failed, error", [(True, "cannot_connect"), (False, "no_rivers")]
+)
+async def test_river_lookup_failure_returns_area_form(hass, failed, error):
+    flow = SewageConfigFlow()
+    flow.hass, flow.context = hass, {"source": "user"}
+    flow.location = {"latitude": 52, "longitude": 0}
+    with (
+        patch(
+            "custom_components.sewage_alerts_uk.location_flow.async_get_clientsession"
+        ),
+        patch(
+            "custom_components.sewage_alerts_uk.location_flow.load_network",
+            AsyncMock(
+                side_effect=FeedError("offline") if failed else None,
+                return_value=RiverNetwork([], 52, 0),
+            ),
+        ),
+    ):
+        result = await flow.async_step_area({"area_type": "river"})
+    assert result["step_id"] == "area"
+    assert result["errors"]["base"] == error
 
 
 async def test_location_confirm_preserves_watch_and_unique_id(hass):
@@ -377,7 +408,11 @@ async def test_coastal_discovery_groups_nearby_outfalls(hass, network):
 async def test_coastal_confirm_creates_coastal_watch(hass):
     flow = SewageConfigFlow()
     flow.hass, flow.context = hass, {"source": "user"}
-    flow.target_coords, flow.range_km, flow.coast_name = (52.0, -1.0), 10, "Example Coast"
+    flow.target_coords, flow.range_km, flow.coast_name = (
+        (52.0, -1.0),
+        10,
+        "Example Coast",
+    )
     flow.sites = [
         {"site_id": "S1", "company": "Water", "river": "Sea", "distance_m": 1000}
     ]
