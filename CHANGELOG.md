@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.1 — 2026-11-28
+
+- Select an outfall from the dashboard card's list to highlight its map marker
+  and open its details.
+- Drag the dashboard map with a mouse or one finger to pan around the watched
+  area.
+
 ## 0.7.0 — 2026-11-27
 
 - Bundle a dashboard card with a live map, outfall details and configurable
